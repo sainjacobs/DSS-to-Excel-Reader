@@ -2,11 +2,13 @@
 
 
 
-## Getting started
+## What this code does
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+These two scripts pull a list of selected variables from multiple DSS files (or just one) containing the outputs of CalSim runs into Excel. The same list of variables is used for each file and variables that are not in all files are excluded. Variables are columns. Timesteps are rows. Alternatives are blocks of rows.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The intent of this approach was twofold: (1) provide a fast, reusable way to pull variables for Excel-base comparison between alternatives with out relying on the HEC-DSS Excel add-in, and (2) pull data for dyanmic plotting using Bokeh.
+
+The second use (dynamic plotting) is the reason for some of the idiosyncracies in the code. Hopefully, by creating a separate repo for just the DSS-file-reading functionality, we can streamline this code.
 
 ## Add your files
 
