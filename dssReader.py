@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------
 
 # Import data handling functions from our local module
-from dssReadFuncs import reader, pickler, load_pickles, make_wide_df
+from csdss_readlib import reader, pickler, load_pickles, get_trend_fields
 
 # NOTE: need to use name/main for Pool to work outside of script
 if __name__ == '__main__':
@@ -30,15 +30,18 @@ if __name__ == '__main__':
     # The names can be anything though, e.g. ["Alt2v1", Alt2v1_VAs.dss"]
     runs = [
         ["Baseline", ("Baseline.dss")],
-        ["Alt1", ("Alt2.dss")],
-        ["Alt2", ("Alt3.dss")],
+        ["Alt2", ("Alt2.dss")],
+        ["Alt3", ("Alt3.dss")],
     ]
+
+    # Most commonly used fields from Trend Report
+    l_tr_fields = get_trend_fields()
 
     # This is a list of the variables you want to retrieve.
     # These correspond to the B part in the DSS pathname.
     # Variables that are not present in all runs are thrown out
     # though this behavior can be changed if needed.
-    field_list = [
+    add_field_list = [
         "test",
         "WYT_SJR_",
         "WYT_SJR_STAN_",
@@ -71,16 +74,18 @@ if __name__ == '__main__':
 
     s_default = 'S_SHSTA'
 
+    field_list = l_tr_fields + add_field_list
+
     # Only do this step if we are creating pickles. Otherwise, read the data
     # from existing pickles. Facilitates quickly jumping back into analysis
     # without having to load from DSS files.
     if make_pickles == True:
-        append_list, baseline_stack = reader(runs, field_list)
-        pickler(append_list, baseline_stack)
+        append_list, baseline_stack, c_default_units = reader(runs, field_list)
+        pickler(append_list, baseline_stack, c_default_units)
 
     # This runs no matter what. The pickle files allow you to come back and
     # pull the same variables without waiting for the file reads to complete
-    df_all_data, df_diffs = load_pickles()
+    df_all_data, df_diffs, c_default_units = load_pickles()
 
     # Write to Excel.
     try:
