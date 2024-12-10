@@ -20,31 +20,12 @@ def get_trend_fields ():
 
     for line in lines:
         for field in line.split(','):
-            print(field)
             field = field.strip(' ')
             field = field.strip('\n')
             l_tr_fields.append(field)
     l_tr_fields[:] = [field for field in l_tr_fields if field != '']
 
     return l_tr_fields
-
-def reader(runs: list,
-           field_list: list):
-    start_time = time.time()
-    multiprocessing_results, field_list_final, c_default_units = \
-        multifile_read.multiprocessing_file_reader(runs, field_list)
-
-    append_list = []
-    baseline_stack = []
-
-    for i in range(len(runs)):
-        append_list.append(multiprocessing_results[runs[i][0]])
-        baseline_stack.append(multiprocessing_results['Baseline'])
-    print(f"Run time for pulling DSS data with multiprocessing = "
-          f"{(time.time() - start_time)} seconds")
-    print(f'Removed {list(set(field_list) ^ set(field_list_final))} from field list.')
-
-    return append_list, baseline_stack, c_default_units
 
 def pickler(append_list, baseline_stack, c_default_units):
     df_all_data = pd.DataFrame()
@@ -99,28 +80,6 @@ def load_pickles():
     return (df_all_data, df_diffs, c_default_units)
 
 
-def make_wide_df(df_all_data):
-    df_fixed_plot = df_all_data.iloc[:, 0:num_fixed]
-    wide_list = [df_fixed_plot]
-    scenario_names = []
-    for s in df_all_data['Scenario'].unique():
-        scenario_names.append(s)
-
-        temp_df = df_all_data[df_all_data['Scenario'] == s].iloc[:, num_fixed::]
-
-        new_col_names = []
-        for field in temp_df.columns:
-            new_col_names.append(f'{s}: {field}')
-        temp_df.columns = new_col_names
-        temp_df.reset_index(drop=True, inplace=True)
-
-        wide_list.append(temp_df)
-
-    df_plot = pd.concat(wide_list, axis=1)
-    df_plot = df_plot.dropna(how='any')
-
-    return df_plot, scenario_names
-
 def single_file_pull(dss_file, target_ts_list, scenario_name):
     startDate = "31OCT1921 00:00:00"
     endDate = "30SEP2021 00:00:00"
@@ -128,7 +87,8 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
 
     fid = HecDss.Open(dss_file)
 
-    # getPathnamesDict returns a dict of pathnames. All CalSim outputs are contained in 'TS'
+    # getPathnamesDict returns a dict of pathnames.
+    # All CalSim outputs are contained in 'TS'
     pathNamesDict = fid.getPathnameDict()
     pathNames = np.array(list(pathNamesDict.values())[0])
 
@@ -142,7 +102,7 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
     dfPaths = dfPaths.drop_duplicates(subset=['B', 'C'])
     dfPaths = dfPaths.reset_index()
     dfPaths.drop('index', axis=1, inplace=True)
-    len(pd.unique(dfPaths['B']))
+
     target_ts_list_final = target_ts_list.copy()
     # use our list of variables to search the DSS File. For CS3, b parts are unique
     target_path_list = []
@@ -156,8 +116,7 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
 
     # Empty lists for timeseries
     ts_list = []
-    # unit_list = [] #TODO: delete list version
-    c_default_units = {}
+    c_default_units = pd.Series()
     # iterate through list of variables and populate the timeseries and unit lists
     for i, p in enumerate(target_path_list):
         working_ts = fid.read_ts(p, window=(startDate, endDate), trim_missing=False)
@@ -203,9 +162,6 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
         else:
             dy = np.append(dy, current_time.year)
 
-    ## fixing this
-
-    # Add unit indicator in column name
     df_ts = pd.DataFrame(index=times)
     for t, ts in enumerate(target_ts_list_final):
         df_ts[ts] = ts_list[t].values
@@ -213,19 +169,6 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
     # Duplicate columns with other (cfs/taf) unit
     durations = [t.day for t in
                  times]  # list of month durations for our timeframe of interest
-    # cfs_taf = np.multiply(durations, (24 * 3600 / 43560 / 1000))
-    # taf_cfs = np.divide((43560 * 1000 / 24 / 3600), durations)
-    # for series_name, series in df_ts.items():
-    #     if series_name[-5:] == '(CFS)':
-    #         flip_name = f'{series_name[:-5]}(TAF)'
-    #         flip_series = np.multiply(series, cfs_taf)
-    #         df_ts[flip_name] = flip_series
-    #     elif series_name[-5:] == '(TAF)':
-    #         flip_name = f'{series_name[:-5]}(CFS)'
-    #         flip_series = np.multiply(series, cfs_taf)
-    #         df_ts[flip_name] = flip_series
-    #     else:
-    #         pass
 
     df_ts.insert(0, 'DY', dy)
     df_ts.insert(0, 'WY', wy)
@@ -238,16 +181,24 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
 
     return df_ts, target_ts_list_final, c_default_units
 
-class multifile_read():
-    @classmethod
-    # def __init__(self):
-    #     # self.runs = runs
-    #     # self.field_list = field_list
-    def multiprocessing_file_reader(self, runs, field_list):
-        results = {}
-        c_default_units_all = {}
-        field_list_final = field_list.copy()
+def multiprocessing_file_reader(runs, field_list):
+    results = {}
+    c_default_units_all = pd.Series()
+    field_list_final = field_list.copy()
 
+    multiproces = False
+
+    # Non-multi version for debug
+    if multiproces == False:
+        for run in runs:
+            print('Working on', run[0])
+            result, target_ts_list, c_default_units = \
+                single_file_pull(run[1], field_list, run[0])
+            field_list_final = list(set(target_ts_list) & set(field_list_final))
+            # add into dictionary to store
+            c_default_units_all[run[0]] = c_default_units
+            results[run[0]] = result
+    else:
         # create pool
         pool = Pool()
         # Create and start runs
@@ -265,4 +216,51 @@ class multifile_read():
         # wait for all tasks to finish
         pool.join()
 
-        return results, field_list_final, c_default_units_all
+    return results, field_list_final, c_default_units_all
+
+def file_reader(runs: list[list], field_list):
+    results = {}
+    c_default_units_all = pd.Series()
+    field_list_final = field_list.copy()
+
+    multiprocess = False
+
+    # Non-multi version for debug
+    if multiprocess == False:
+        for run in runs:
+            print('Working on', run[0])
+            result, target_ts_list, c_default_units = \
+                single_file_pull(run[1], field_list, run[0])
+            field_list_final = list(set(target_ts_list) & set(field_list_final))
+            # add into dictionary to store
+            c_default_units_all[run[0]] = c_default_units
+            results[run[0]] = result
+    else:
+        # create pool
+        pool = Pool()
+        # Create and start runs
+        for run in runs:
+            print(f'Working on {run[0]} - multiproc')
+            result, target_ts_list, c_default_units = pool.apply_async(single_file_pull,
+                                                                       args=(run[1], field_list, run[0])).get()
+            field_list_final = list(set(target_ts_list) & set(field_list_final))
+            # add into dictionary to store
+            c_default_units_all[run[0]] = c_default_units
+            results[run[0]] = result
+
+        # close the process pool
+        pool.close()
+        # wait for all tasks to finish
+        pool.join()
+
+    append_list = []
+    baseline_stack = []
+
+    for i in range(len(runs)):
+        append_list.append(results[runs[i][0]])
+        baseline_stack.append(results['Baseline'])
+    # print(f"Run time for pulling DSS data with multiprocessing = "
+    #       f"{(time.time() - start_time)} seconds")
+    print(f'Removed {list(set(field_list) ^ set(field_list_final))} from field list.')
+
+    return append_list, baseline_stack, c_default_units

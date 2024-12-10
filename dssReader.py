@@ -9,9 +9,13 @@
 # -------------------------------------------------------------------
 
 # Import data handling functions from our local module
-from csdss_readlib import reader, pickler, load_pickles, get_trend_fields
-
+from csdss_readlib import file_reader, pickler, load_pickles, get_trend_fields
+import time
+import pandas as pd
 # NOTE: need to use name/main for Pool to work outside of script
+
+start_time = time.time()
+
 if __name__ == '__main__':
 
     # 'make_pickles' is switch to save time when repeatedly pulling
@@ -20,7 +24,7 @@ if __name__ == '__main__':
     # specific list of variables below from the set of the specific
     # set of files below.
     # If you change either list, you need to make pickles again.
-    make_pickles = True
+    make_archive = False
 
     # List of runs. If not storing DSS files in the same directory,
     # provide full paths or paths relative to this file.
@@ -32,46 +36,28 @@ if __name__ == '__main__':
         ["Baseline", ("Baseline.dss")],
         ["Alt2", ("Alt2.dss")],
         ["Alt3", ("Alt3.dss")],
+        # ["Alt3", ("CS3DV_Iter1.dss")],
+        # ["Alt4", ("CS3DV_Iter2.dss")],
+        # ["Alt5", ("CS3DV_Iter3.dss")],
+        # ["Alt6", ("CS3DV_Iter4.dss")],
+        # ["Alt7", ("CS3DV_Iter5.dss")],
+        # ["Alt8", ("CS3DV_Iter6.dss")],
     ]
 
-    # Most commonly used fields from Trend Report
     l_tr_fields = get_trend_fields()
 
     # This is a list of the variables you want to retrieve.
     # These correspond to the B part in the DSS pathname.
     # Variables that are not present in all runs are thrown out
     # though this behavior can be changed if needed.
-    add_field_list = [
-        "test",
-        "WYT_SJR_",
-        "WYT_SJR_STAN_",
-        "S_MELON",
-        "C_MELON",
-        "C_STS059",
-        "D_STS059_OAK001",
-        "D_STS059_UFC000",
-        "D_WDWRD_61_PA3",
-        "D_STS059_SSJ001",
-        "D_SSJ004_61_PA1",
-        "D_OAK020_61_PA2",
-        "C_LJC022",
-        "C_LJC010",
+    add_field_list: list = [
         "D_LJC010_60S_PA2",
         "D_LJC022_WTPWDH",
         "D_LJC022_60S_PA1",
-        # "LJC_TO_CSJWCD_",
-        # "LJC_TO_SEWD_",
-        # "UFC_TO_CSJWCD_SJRBASE_",
-        # "UFC_TO_SEWD_SJRBASE_",
         "D_CLV026_60S_PA1",
         "D_CLV026_WTPWDH",
-        "D_WTPDWS_60S_NU1",
-        "D_MOK035_WTPDWS",
-        "D_SJR028_WTPDWS",
-        "C_MELONVA",
-        "S_SHSTA"
-    ]
 
+    ]
     s_default = 'S_SHSTA'
 
     field_list = l_tr_fields + add_field_list
@@ -79,18 +65,70 @@ if __name__ == '__main__':
     # Only do this step if we are creating pickles. Otherwise, read the data
     # from existing pickles. Facilitates quickly jumping back into analysis
     # without having to load from DSS files.
-    if make_pickles == True:
-        append_list, baseline_stack, c_default_units = reader(runs, field_list)
+    if make_archive == True:
+
+        append_list, baseline_stack, c_default_units = file_reader(runs, field_list)
         pickler(append_list, baseline_stack, c_default_units)
 
     # This runs no matter what. The pickle files allow you to come back and
     # pull the same variables without waiting for the file reads to complete
     df_all_data, df_diffs, c_default_units = load_pickles()
 
-    # Write to Excel.
+    # Add a row with units below column titles to clarify output
+    l_units = []
+    for col in df_all_data.columns:
+        if col in c_default_units:
+            l_units.append(c_default_units[col])
+        else:
+            l_units.append("(none)")
+
+    # Add units to original writeout (contains mixed units)
+    df_units = pd.DataFrame(columns=df_all_data.columns)
+    df_units.loc[0] = l_units
+    df_all_data_units = df_units = pd.concat([df_units, df_all_data], axis=0)
+
+    ### Unit-standard outputs ###
+    ## Create versions where all CFS adn TAF are standardized
+    # TODO - Put a Duration (days) column in output
+    l_durations = [df_all_data['Date'][row].day for row in df_all_data.index]
+
+    # Create TAF version, where all CFS vars are converted to TAF
+    df_taf = df_all_data.copy(deep=True)
+    for col in df_taf.columns:
+        if col in c_default_units and df_all_data_units[col].iloc[0] == 'CFS':
+            df_taf[col] = df_taf[col] * 24 * 3600 * l_durations / 43560 / 1000
+
+    # Create CFS version, where all TAF vars are converted to CFS
+    df_cfs = df_all_data.copy(deep=True)
+    for col in df_cfs.columns:
+        if col in c_default_units and df_all_data_units[col].iloc[0] == 'TAF':
+            df_cfs[col] = df_cfs[col] / 24 / 3600 / l_durations * 43560 * 1000
+
+    # Write original output to Excel.
     try:
         df_all_data.to_excel("DSS_contents.xlsx")
     except:
         print("Error writing output file. "
               "Make sure 'DSS_contents.xlsx' is not open.")
+    # Write original output + units to Excel.
+    try:
+        df_all_data_units.to_excel("DSS_contents_Units.xlsx")
+    except:
+        print("Error writing output file. "
+              "Make sure 'DSS_contents_Units.xlsx' is not open.")
+    # Write TAF version to Excel.
+    try:
+        df_taf.to_excel("DSS_contents_TAF.xlsx")
+    except:
+        print("Error writing output file. "
+              "Make sure 'DSS_contents_TAF.xlsx' is not open.")
+    # Write CFS vresion to Excel.
+    try:
+        df_cfs.to_excel("DSS_contents_CFS.xlsx")
+    except:
+        print("Error writing output file. "
+              "Make sure 'DSS_contents_CFS.xlsx' is not open.")
+
+    print(f'Total runtime: {(time.time()-start_time)/60} minutes')
+    print(f'Pulled: {len(runs)} files')
 
