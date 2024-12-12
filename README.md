@@ -1,6 +1,16 @@
 # CalSim_DSS_Reader
 
+Create an environement from the yml file. Specific version requirements are:
+ - Python 3.10 or 3.11
+ - numpy 1.26.4
+ - pydsstools 2.3.2 (pip)
 
+## File Structure
+
+|- cs3_viz_app_main.py (main) <br/>
+|--- csdss_readlib_fullfile.py (read DSS file contents and save in pickle + Excel) <br/>
+|----- TR_fields.txt <br/>
+|--- cs3_plotlib.py (plotting functions) <br/>
 
 ## What this code does
 
