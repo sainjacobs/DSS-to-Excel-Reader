@@ -1,0 +1,13 @@
+name: vis
+
+dependencies:
+     - python=3.10
+     - numpy=1.26
+     - pandas
+     - panel
+     - holoviews
+     - hvplot
+     - jupyter
+     - pip
+     - pip:
+          - pydsstools
