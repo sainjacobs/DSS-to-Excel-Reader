@@ -80,7 +80,7 @@ def load_pickles():
     return (df_all_data, df_diffs, c_default_units)
 
 
-def single_file_pull(dss_file, target_ts_list, scenario_name):
+def single_file_pull(dss_file, target_ts_list, scenario_name, model):
     startDate = "31OCT1921 00:00:00"
     endDate = "30SEP2021 00:00:00"
     startDate_1 = datetime.date(1921, 10, 31)
@@ -108,8 +108,19 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
     target_path_list = []
     for b_part in target_ts_list:
         try:
-            c_part = dfPaths[dfPaths['B'] == b_part]['C'].iloc[0]
-            target_pathName = f'/CALSIM/{b_part}/{c_part}//1MON/L2020A/'
+            #Adjust DSS String for different models
+            if model == "HEC5Q":
+                a_part = dfPaths[dfPaths['B'] == b_part]['A'].iloc[0]
+                c_part = "TEMP_F"
+                d_part = "1Day"
+                e_part = "R2019"
+            else:
+                a_part = "CALSIM"
+                c_part = dfPaths[dfPaths['B'] == b_part]['C'].iloc[0]
+                d_part = "1MON"
+                e_part = "L2020A"
+
+            target_pathName = f'/{a_part}/{b_part}/{c_part}//{d_part}/{e_part}/'
             target_path_list.append(target_pathName)
         except:
             target_ts_list_final.remove(b_part)
@@ -127,6 +138,7 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
     times = np.array([startDate_1])
     years = [startDate_1.year]
     months = [startDate_1.month]
+    days = [startDate_1.day]
 
     # Convert CY to WY
     if startDate_1.month > 9:
@@ -145,13 +157,21 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
         # hack to find end of month: look at last date (should be last day of last month)
         # Add a day (first day of this month), then add a month (first day of next month)
         # Subtract a day (last day of this month)
-        current_time = times[i - 1] \
-                       + relativedelta(days=+1) \
-                       + relativedelta(months=+1) \
-                       - relativedelta(days=+1)
+        if d_part == "1MON":
+            current_time = times[i - 1] \
+                           + relativedelta(days=+1) \
+                           + relativedelta(months=+1) \
+                           - relativedelta(days=+1)
+        #Generate daily dates if time series is daily instead of monthly
+        elif d_part == "1Day":
+            current_time = times[i - 1] \
+                           + relativedelta(days=+1)
+
         times = np.append(times, current_time)
         years = np.append(years, current_time.year)
         months = np.append(months, current_time.month)
+        days = np.append(days, current_time.day)
+
         if current_time.month > 9:
             wy = np.append(wy, current_time.year + 1)
         else:
@@ -172,6 +192,8 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
 
     df_ts.insert(0, 'DY', dy)
     df_ts.insert(0, 'WY', wy)
+    if d_part == "1Day":
+        df_ts.insert(0, 'Day', days)
     df_ts.insert(0, 'Month', months)
     df_ts.insert(0, 'Year', years)
     df_ts.insert(0, 'Scenario', scenario_name)
@@ -181,7 +203,7 @@ def single_file_pull(dss_file, target_ts_list, scenario_name):
 
     return df_ts, target_ts_list_final, c_default_units
 
-def multiprocessing_file_reader(runs, field_list):
+def multiprocessing_file_reader(runs, field_list, model):
     results = {}
     c_default_units_all = pd.Series()
     field_list_final = field_list.copy()
@@ -193,7 +215,7 @@ def multiprocessing_file_reader(runs, field_list):
         for run in runs:
             print('Working on', run[0])
             result, target_ts_list, c_default_units = \
-                single_file_pull(run[1], field_list, run[0])
+                single_file_pull(run[1], field_list, run[0], model)
             field_list_final = list(set(target_ts_list) & set(field_list_final))
             # add into dictionary to store
             c_default_units_all[run[0]] = c_default_units
@@ -205,7 +227,7 @@ def multiprocessing_file_reader(runs, field_list):
         for run in runs:
             print('Working on', run[0])
             result, target_ts_list, c_default_units = pool.apply_async(single_file_pull,
-                                                                       args=(run[1], field_list, run[0])).get()
+                                                                       args=(run[1], field_list, run[0], model)).get()
             field_list_final = list(set(target_ts_list) & set(field_list_final))
             # add into dictionary to store
             c_default_units_all[run[0]] = c_default_units
@@ -218,7 +240,7 @@ def multiprocessing_file_reader(runs, field_list):
 
     return results, field_list_final, c_default_units_all
 
-def file_reader(runs: list[list], field_list):
+def file_reader(runs: list[list], field_list, model):
     results = {}
     c_default_units_all = pd.Series()
     field_list_final = field_list.copy()
@@ -230,7 +252,7 @@ def file_reader(runs: list[list], field_list):
         for run in runs:
             print('Working on', run[0])
             result, target_ts_list, c_default_units = \
-                single_file_pull(run[1], field_list, run[0])
+                single_file_pull(run[1], field_list, run[0], model)
             field_list_final = list(set(target_ts_list) & set(field_list_final))
             # add into dictionary to store
             c_default_units_all[run[0]] = c_default_units
@@ -242,7 +264,7 @@ def file_reader(runs: list[list], field_list):
         for run in runs:
             print(f'Working on {run[0]} - multiproc')
             result, target_ts_list, c_default_units = pool.apply_async(single_file_pull,
-                                                                       args=(run[1], field_list, run[0])).get()
+                                                                       args=(run[1], field_list, run[0], model)).get()
             field_list_final = list(set(target_ts_list) & set(field_list_final))
             # add into dictionary to store
             c_default_units_all[run[0]] = c_default_units
