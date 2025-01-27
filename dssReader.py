@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # specific list of variables below from the set of the specific
     # set of files below.
     # If you change either list, you need to make pickles again.
-    make_archive = False
+    make_archive = True
 
     # List of runs. If not storing DSS files in the same directory,
     # provide full paths or paths relative to this file.
@@ -32,15 +32,17 @@ if __name__ == '__main__':
     #               ["Description_2", ("File_2.dss")],
     #          ...  ["Description_n", ("File_n.dss")]]
     # The names can be anything though, e.g. ["Alt2v1", Alt2v1_VAs.dss"]
+    model = "CALSIM"
+
     runs = [
-        ["Baseline", ("Baseline.dss")],
-        ["Alt2", ("Alt2.dss")],
-        ["Alt3", ("Alt3.dss")],
-        # ["Alt3", ("CS3DV_Iter1.dss")],
-        # ["Alt4", ("CS3DV_Iter2.dss")],
-        # ["Alt5", ("CS3DV_Iter3.dss")],
-        # ["Alt6", ("CS3DV_Iter4.dss")],
-        # ["Alt7", ("CS3DV_Iter5.dss")],
+        ["Baseline", ("Reclamation_LTO_2021_NAA_CALSIM3_L2020A_090723.dss")],
+        ["ALT1", ("CS3_ALT1_2022MED_09092023_L2020A_DV_dp.dss")],
+        ["Alt2woTUCPwoVA", ("Reclamation_LTO_2021_Alt2v1_woTUCP_CALSIM3_L2020A_091324.dss")],
+        ["Alt2woTUCPDeltaVA", ("Reclamation_LTO_2021_Alt2v2_woTUCP_CALSIM3_L2020A_091324.dss")],
+        ["Alt2woTUCPAllVA", ("Reclamation_LTO_2021_Alt2v3_woTUCP_CALSIM3_L2020A_091324.dss")],
+        ["Alt2wTUCPwoVA", ("Reclamation_LTO_2021_Alt2v1_wTUCP_CALSIM3_L2020A_091324.dss")],
+        ["ALT3", ("Reclamation_LTO_2021_ALT3_CALSIM3_L2020A_092423.dss")],
+        ["Alt4", ("Reclamation_LTO_2021_ALT4_CALSIM3_L2020A_091624.dss")]
         # ["Alt8", ("CS3DV_Iter6.dss")],
     ]
 
@@ -50,14 +52,20 @@ if __name__ == '__main__':
     # These correspond to the B part in the DSS pathname.
     # Variables that are not present in all runs are thrown out
     # though this behavior can be changed if needed.
-    add_field_list: list = [
-        "D_LJC010_60S_PA2",
-        "D_LJC022_WTPWDH",
-        "D_LJC022_60S_PA1",
-        "D_CLV026_60S_PA1",
-        "D_CLV026_WTPWDH",
 
+    add_field_list: list = [
+        "C_LWSTN",
+        "C_CLR011",
+        "C_KSWCK",
+        "C_SAC257",
+        "C_SAC240",
+        "C_SAC201",
+        "C_SAC120",
+        "C_FTR059",
+        "C_FTR059",
+        "C_FTR003"
     ]
+
     s_default = 'S_SHSTA'
 
     field_list = l_tr_fields + add_field_list
@@ -67,7 +75,7 @@ if __name__ == '__main__':
     # without having to load from DSS files.
     if make_archive == True:
 
-        append_list, baseline_stack, c_default_units = file_reader(runs, field_list)
+        append_list, baseline_stack, c_default_units = file_reader(runs, field_list, model)
         pickler(append_list, baseline_stack, c_default_units)
 
     # This runs no matter what. The pickle files allow you to come back and
