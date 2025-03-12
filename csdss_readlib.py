@@ -112,15 +112,20 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
             if model == "HEC5Q":
                 a_part = dfPaths[dfPaths['B'] == b_part]['A'].iloc[0]
                 c_part = "TEMP_F"
-                d_part = "1Day"
-                e_part = "R2019"
+                e_part = "1Day"
+                f_part = "R2019"
+            elif model == "DSM2":
+                a_part = dfPaths[dfPaths['B'] == b_part]['A'].iloc[0]
+                c_part = "EC-MEAN"
+                e_part = "1MON"
+                f_part = dfPaths[dfPaths['B'] == b_part]['F'].iloc[0]
             else:
                 a_part = "CALSIM"
                 c_part = dfPaths[dfPaths['B'] == b_part]['C'].iloc[0]
-                d_part = "1MON"
-                e_part = "L2020A"
+                e_part = "1MON"
+                f_part = "L2020A"
 
-            target_pathName = f'/{a_part}/{b_part}/{c_part}//{d_part}/{e_part}/'
+            target_pathName = f'/{a_part}/{b_part}/{c_part}//{e_part}/{f_part}/'
             target_path_list.append(target_pathName)
         except:
             target_ts_list_final.remove(b_part)
@@ -157,13 +162,13 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
         # hack to find end of month: look at last date (should be last day of last month)
         # Add a day (first day of this month), then add a month (first day of next month)
         # Subtract a day (last day of this month)
-        if d_part == "1MON":
+        if e_part == "1MON":
             current_time = times[i - 1] \
                            + relativedelta(days=+1) \
                            + relativedelta(months=+1) \
                            - relativedelta(days=+1)
         #Generate daily dates if time series is daily instead of monthly
-        elif d_part == "1Day":
+        elif e_part == "1Day":
             current_time = times[i - 1] \
                            + relativedelta(days=+1)
 
@@ -192,7 +197,7 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
 
     df_ts.insert(0, 'DY', dy)
     df_ts.insert(0, 'WY', wy)
-    if d_part == "1Day":
+    if e_part == "1Day":
         df_ts.insert(0, 'Day', days)
     df_ts.insert(0, 'Month', months)
     df_ts.insert(0, 'Year', years)
@@ -212,7 +217,7 @@ def multiprocessing_file_reader(runs, field_list, model):
 
     # Non-multi version for debug
     if multiproces == False:
-        for run in runs:
+        for run_index,run in runs:
             print('Working on', run[0])
             result, target_ts_list, c_default_units = \
                 single_file_pull(run[1], field_list, run[0], model)
@@ -224,10 +229,11 @@ def multiprocessing_file_reader(runs, field_list, model):
         # create pool
         pool = Pool()
         # Create and start runs
-        for run in runs:
+        for run_index, run in enumerate(runs):
             print('Working on', run[0])
+
             result, target_ts_list, c_default_units = pool.apply_async(single_file_pull,
-                                                                       args=(run[1], field_list, run[0], model)).get()
+                                                                           args=(run[1], field_list, run[0], model)).get()
             field_list_final = list(set(target_ts_list) & set(field_list_final))
             # add into dictionary to store
             c_default_units_all[run[0]] = c_default_units
@@ -249,7 +255,7 @@ def file_reader(runs: list[list], field_list, model):
 
     # Non-multi version for debug
     if multiprocess == False:
-        for run in runs:
+        for run_index,run in enumerate(runs):
             print('Working on', run[0])
             result, target_ts_list, c_default_units = \
                 single_file_pull(run[1], field_list, run[0], model)
@@ -261,7 +267,7 @@ def file_reader(runs: list[list], field_list, model):
         # create pool
         pool = Pool()
         # Create and start runs
-        for run in runs:
+        for run_index, run in enumerate(runs):
             print(f'Working on {run[0]} - multiproc')
             result, target_ts_list, c_default_units = pool.apply_async(single_file_pull,
                                                                        args=(run[1], field_list, run[0], model)).get()
