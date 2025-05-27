@@ -81,8 +81,11 @@ def load_pickles():
 
 
 def single_file_pull(dss_file, target_ts_list, scenario_name, model):
+
     startDate = "31OCT1921 00:00:00"
     endDate = "30SEP2021 00:00:00"
+
+    #startDate_1 = datetime.strptime(startDate.title(), "%d%b%Y %H:%M:%S")
     startDate_1 = datetime.date(1921, 10, 31)
 
     fid = HecDss.Open(dss_file)
@@ -140,7 +143,13 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
         # unit_list.append(working_ts.units)
         c_default_units[target_ts_list_final[i]] = working_ts.units
 
-    times = np.array([startDate_1])
+    if e_part == '1MON':
+        times = np.array([startDate_1])
+    elif e_part == '1Day':
+        # 1day shift in timestamps for daily data. This is needed b/c per-aver daily data in HEC-DSS format is recorded as <DATE> 24:00, which python will read as <DATE + 1> 00:00 by default.
+        times = np.array([startDate_1 + relativedelta(days=-1)])
+    else:
+        raise ValueError(rf"No logic available for this {e_part} e_part")
     years = [startDate_1.year]
     months = [startDate_1.month]
     days = [startDate_1.day]
