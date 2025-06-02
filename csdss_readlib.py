@@ -118,8 +118,11 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
                 e_part = "1Day"
                 f_part = "R2019"
             elif model == "DSM2":
+                if b_part== 'X2':
+                    c_part = 'POSITION'
+                else:
+                    c_part = 'EC-MEAN'
                 a_part = dfPaths[dfPaths['B'] == b_part]['A'].iloc[0]
-                c_part = "EC-MEAN"
                 e_part = "1MON"
                 f_part = dfPaths[dfPaths['B'] == b_part]['F'].iloc[0]
             else:
