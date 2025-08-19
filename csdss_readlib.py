@@ -165,9 +165,9 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
 
     # Convert CY to delivery (contract) year
     if startDate_1.month < 3:
-        dy = [startDate_1.year - 1]
+        cy = [startDate_1.year - 1]
     else:
-        dy = startDate_1.year
+        cy = startDate_1.year
 
     # Note loops starts at 1 not zero
     for i in range(1, len(ts_list[0].values)):
@@ -195,9 +195,9 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
             wy = np.append(wy, current_time.year)
 
         if current_time.month < 3:
-            dy = np.append(dy, current_time.year - 1)
+            cy = np.append(cy, current_time.year - 1)
         else:
-            dy = np.append(dy, current_time.year)
+            cy = np.append(cy, current_time.year)
 
     df_ts = pd.DataFrame(index=times)
     for t, ts in enumerate(target_ts_list_final):
@@ -207,7 +207,8 @@ def single_file_pull(dss_file, target_ts_list, scenario_name, model):
     durations = [t.day for t in
                  times]  # list of month durations for our timeframe of interest
 
-    df_ts.insert(0, 'DY', dy)
+    df_ts.insert(0, 'CY', cy)
+    df_ts.insert(0, 'DY', years)
     df_ts.insert(0, 'WY', wy)
     if e_part == "1Day":
         df_ts.insert(0, 'Day', days)
