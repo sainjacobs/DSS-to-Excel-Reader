@@ -10,7 +10,7 @@
 
 These two scripts pull a list of selected variables from multiple DSS files (or just one) containing the outputs of a model's runs into Excel. The same list of variables is used for each file and variables that are not in all files are excluded. Variables are columns. Timesteps are rows. Alternatives are blocks of rows.
 
-The intent of this approach was twofold: (1) provide a fast, reusable way to pull variables for Excel-base comparison between alternatives without relying on the HEC-DSS Excel add-in, and (2) pull data for dynamic plotting using Bokeh.
+The intent of this approach was twofold: (1) provide a fast, reusable way to pull variables for Excel-based comparison between alternatives without relying on the HEC-DSS Excel add-in, and (2) pull data for dynamic plotting using Bokeh.
 
 The second use (dynamic plotting) is the reason for some of the idiosyncrasies in the code. Hopefully, by creating a separate repo for just the DSS-file-reading functionality, we can streamline this code.
 
