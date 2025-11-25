@@ -28,7 +28,7 @@ the appendix generation script to function properly down the line. Don't forget 
 
 ## Model and field variable selection
 
-The DSS Reader can be used for CALSIM, HEC5Q, or DSM2 model outputs by changing the string in line 35. Additionally, the list of the list of fields names beginning in line 56 will need to be changed. 
+The DSS Reader can be used for CALSIM, HEC5Q, or DSM2 model outputs by changing the string in line 20 in dssReader.py. Additionally, the list of the list of fields names beginning in line 44 will need to be changed. 
 
 Below are some example fields that can be set for each type of model. In its current form in the repo, the reader is set to run on CALSIM model outputs. 
 
