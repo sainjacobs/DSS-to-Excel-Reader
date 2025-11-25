@@ -1,13 +1,3 @@
-# -------------------------------------------------------------------
-# DSS File reader 0.1
-# Sam Waers, P.E.; Frankie Nuffer-Rodriguez
-#
-# Run this file in same directory as dssReadFuncs.py
-# See the "import" statements at the top of  in dssReadFuncs.py
-# for a list of dependencies which will need to be installed
-# in the environment you use for this script.
-# -------------------------------------------------------------------
-
 # Import data handling functions from our local module
 from csdss_readlib import file_reader, pickler, load_pickles, get_trend_fields
 import time
@@ -18,7 +8,7 @@ start_time = time.time()
 
 if __name__ == '__main__':
 
-    # 'make_pickles' is switch to save time when repeatedly pulling
+    # 'make_archive' is switch to save time when repeatedly pulling
     # the same list of variables from the same files.
     # You can set this to false after the first time you read the
     # specific list of variables below from the set of the specific
@@ -26,13 +16,15 @@ if __name__ == '__main__':
     # If you change either list, you need to make pickles again.
     make_archive = True
 
+    # model that the DSS files come from. Can be 'CALSIM', 'HEC5Q', or 'DSM2'
+    model = "CALSIM"
+
     # List of runs. If not storing DSS files in the same directory,
     # provide full paths or paths relative to this file.
     # structure is [["Description_1", ("File_1.dss")],
     #               ["Description_2", ("File_2.dss")],
     #          ...  ["Description_n", ("File_n.dss")]]
     # The names can be anything though, e.g. ["Alt2v1", Alt2v1_VAs.dss"]
-    model = "CALSIM"
 
     runs = [
         ["Baseline", ("Reclamation_LTO_2021_NAA_CALSIM3_L2020A_090723.dss")],
