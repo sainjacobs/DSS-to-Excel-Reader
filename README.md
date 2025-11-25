@@ -1,35 +1,30 @@
-# CalSim_DSS_Reader
-
-Create an environement from the yml file. Specific version requirements are:
- - Python 3.10 or 3.11
- - numpy 1.26.4
- - pydsstools 2.3.2 (pip)
+# DSS Reader
 
 ## File Structure
 
-|- cs3_viz_app_main.py (main) <br/>
-|--- csdss_readlib_fullfile.py (read DSS file contents and save in pickle + Excel) <br/>
-|----- TR_fields.txt <br/>
-|--- cs3_plotlib.py (plotting functions) <br/>
+- dssReader.py (main)
+- csdss_readlib.py (functions to read DSS file contents and save in pickle + Excel)
+- TR_fields.txt (default fields to read in)
 
 ## What this code does
 
-These two scripts pull a list of selected variables from multiple DSS files (or just one) containing the outputs of CalSim runs into Excel. The same list of variables is used for each file and variables that are not in all files are excluded. Variables are columns. Timesteps are rows. Alternatives are blocks of rows.
+These two scripts pull a list of selected variables from multiple DSS files (or just one) containing the outputs of a model's runs into Excel. The same list of variables is used for each file and variables that are not in all files are excluded. Variables are columns. Timesteps are rows. Alternatives are blocks of rows.
 
-The intent of this approach was twofold: (1) provide a fast, reusable way to pull variables for Excel-base comparison between alternatives with out relying on the HEC-DSS Excel add-in, and (2) pull data for dyanmic plotting using Bokeh.
+The intent of this approach was twofold: (1) provide a fast, reusable way to pull variables for Excel-base comparison between alternatives without relying on the HEC-DSS Excel add-in, and (2) pull data for dynamic plotting using Bokeh.
 
-The second use (dynamic plotting) is the reason for some of the idiosyncracies in the code. Hopefully, by creating a separate repo for just the DSS-file-reading functionality, we can streamline this code.
+The second use (dynamic plotting) is the reason for some of the idiosyncrasies in the code. Hopefully, by creating a separate repo for just the DSS-file-reading functionality, we can streamline this code.
 
 ## Usage Instructions
-
+Create an environment from the yml file with the line: `conda env create -f environment.yml`
 1. Open dssReader.py in your local version of the CalSim DSS Reader.
-2. In line 35, set the "model" variable equal to the string name of the type of model you wish to interpret data from (options are "CALSIM", "HEC5Q" or "DSM2")
-3. Beginning in line 37 in the "runs" list, for each list entry in "runs", enter the name of each of your dss files in the parentheses along with the name of the run
+2. Set `make_archive` to True to pull new results or False to pull previously pulled data. Generally, this should be set to True.
+3. In line 20, set the "model" variable equal to the string name of the type of model you wish to interpret data from (options are "CALSIM", "HEC5Q" or "DSM2")
+4. Beginning in line 29 in the "runs" list, for each list entry in "runs", enter the name of each of your dss files in the parentheses along with the name of the run
 (such as Baseline, Alt1, etc.). Refer to the NAA scenario as "Baseline". A NAA/Baseline scenario must be included in the runs for
-the appendix generation script to function properly down the line. . Don't forget the ".dss" file extension when you are specifying file names.
-4. Beginning line 56, in the "add_field_list", specify the field variables that you want to retrieve from the DSS files. These correspond to the B part in the DSS pathname.
-5. Run dssReader.py.
-6. When the DSS Reader has finished running, open the calsim_dss_reader directory and find the DSS Reader outputs. There should be three files: DSS_contents.xlsx, DSS_contents_CFS.xlsx, and DSS_contents_TAF.xlsx. The first output file preserves all unitsfrom the input dss file, the second converts relevant columns to CFS, and the third converts to TAF.
+the appendix generation script to function properly down the line. Don't forget the ".dss" file extension when you are specifying file names.
+5. Beginning line 48, in the "add_field_list", specify the field variables that you want to retrieve from the DSS files. These correspond to the B part in the DSS pathname.
+6. Run dssReader.py.
+7. When the DSS Reader has finished running, open the calsim_dss_reader directory and find the DSS Reader outputs. There should be three files: DSS_contents.xlsx, DSS_contents_CFS.xlsx, and DSS_contents_TAF.xlsx. The first output file preserves all unitsfrom the input dss file, the second converts relevant columns to CFS, and the third converts to TAF.
 
 ## Model and field variable selection
 
@@ -37,7 +32,7 @@ The DSS Reader can be used for CALSIM, HEC5Q, or DSM2 model outputs by changing 
 
 Below are some example fields that can be set for each type of model. In its current form in the repo, the reader is set to run on CALSIM model outputs. 
 
-CALSIM
+**CALSIM:** 
  	"C_LWSTN",
         "C_CLR011",
         "C_KSWCK",
@@ -49,7 +44,7 @@ CALSIM
         "C_FTR059",
         "C_FTR003"
 
-HEC5Q
+**HEC5Q:**
 	"BLW CLEAR CREEK",
         "RED BLUFF",
         "BLW NIMBUS(HAZEL AVE)",
@@ -72,7 +67,8 @@ HEC5Q
         "BLW NEW MELONES",
         "BLW TULLOCH",
         "BLW GOODWIN"
-DSM2
+
+**DSM2:**
 	"SAC_DS_STMBTSL",
         "RSAN007",
         "RSAC075",
