@@ -111,3 +111,5 @@ Below are some example fields that can be set for each type of model. In its cur
         "CHVCT000"
 
 
+## Support
+If an issue is found, please submit a ticket through the GitHub issue tracking system.
