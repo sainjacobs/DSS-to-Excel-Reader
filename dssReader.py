@@ -2,11 +2,16 @@
 from csdss_readlib import file_reader, pickler, load_pickles, get_trend_fields
 import time
 import pandas as pd
+import os
 # NOTE: need to use name/main for Pool to work outside of script
 
 start_time = time.time()
 
 if __name__ == '__main__':
+
+    # Setting Working directory SN 20260304
+    wkdir = r"C:\Github\DSS-to-Excel-Reader"
+    os.chdir(wkdir)
 
     # 'make_archive' is switch to save time when repeatedly pulling
     # the same list of variables from the same files.
@@ -17,7 +22,7 @@ if __name__ == '__main__':
     make_archive = True
 
     # model that the DSS files come from. Can be 'CALSIM', 'HEC5Q', or 'DSM2'
-    model = "CALSIM"
+    model = "DSM2"
 
     # List of runs. If not storing DSS files in the same directory,
     # provide full paths or paths relative to this file.
@@ -27,13 +32,10 @@ if __name__ == '__main__':
     # The names can be anything though, e.g. ["Alt2v1", Alt2v1_VAs.dss"]
 
     runs = [
-        [["Baseline", ("Baseline.dss")],
-         ["Description_1", ("File_1.dss")],
-         ["Description_2", ("File_2.dss")],
-         # ...
-         ["Description_n", ("File_n.dss")]]
+        ["NAA", (r"C:\20251211_BA_Modeling_Appendix\LTO_2022\ModelResultsReports\DATABASE_OUTPUT\NAA\Reclamation_LTO_2021_NAA_DSM2_EC_L2020A_090723.dss")],
+        ["Alt2v2_woTUCP", (r"C:\20251211_BA_Modeling_Appendix\LTO_2022\ModelResultsReports\DATABASE_OUTPUT\Alt2v2_woTUCP\Reclamation_LTO_2021_ALT2v2_woTUCP_DSM2_EC_L2020A_090723_EIS.dss")]
     ]
-
+    
     l_tr_fields = get_trend_fields()
 
     # This is a list of the variables you want to retrieve.
@@ -41,18 +43,19 @@ if __name__ == '__main__':
     # Variables that are not present in all runs are thrown out
     # though this behavior can be changed if needed.
 
-    add_field_list: list = [
-        "C_LWSTN",
-        "C_CLR011",
-        "C_KSWCK",
-        "C_SAC257",
-        "C_SAC240",
-        "C_SAC201",
-        "C_SAC120",
-        "C_FTR059",
-        "C_FTR059",
-        "C_FTR003"
-    ]
+    add_field_list: list = []
+    # [
+    #     "C_LWSTN",
+    #     "C_CLR011",
+    #     "C_KSWCK",
+    #     "C_SAC257",
+    #     "C_SAC240",
+    #     "C_SAC201",
+    #     "C_SAC120",
+    #     "C_FTR059",
+    #     "C_FTR059",
+    #     "C_FTR003"
+    # ]
 
     s_default = 'S_SHSTA'
 
@@ -127,4 +130,5 @@ if __name__ == '__main__':
 
     print(f'Total runtime: {(time.time()-start_time)/60} minutes')
     print(f'Pulled: {len(runs)} files')
+
 

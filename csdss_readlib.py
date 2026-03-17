@@ -264,7 +264,7 @@ def file_reader(runs: list[list], field_list, model):
     c_default_units_all = pd.Series()
     field_list_final = field_list.copy()
 
-    multiprocess = False
+    multiprocess = True
 
     # Non-multi version for debug
     if multiprocess == False:
@@ -299,7 +299,7 @@ def file_reader(runs: list[list], field_list, model):
 
     for i in range(len(runs)):
         append_list.append(results[runs[i][0]])
-        baseline_stack.append(results['Baseline'])
+        baseline_stack.append(results[runs[0][0]])
     # print(f"Run time for pulling DSS data with multiprocessing = "
     #       f"{(time.time() - start_time)} seconds")
     print(f'Removed {list(set(field_list) ^ set(field_list_final))} from field list.')
